@@ -8,7 +8,7 @@ class Parser():
 
     def get_bpm(self, milliseconds)
         # Get bpm current
-        for line in self.
+        for line in self.sync_track
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
