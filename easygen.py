@@ -48,4 +48,6 @@ class Parser():
 
 with open(filename, 'r') as f:
     lines = f.readlines()
-    parse_file(lines)
+
+parser = Parser()
+parse_file(lines)
