@@ -9,6 +9,7 @@ class Parser():
     def get_bpm(self, milliseconds):
         # Get bpm current
         bpm = None
+        bpm_start = None
         for line in self.sync_track:
             if bpm = None:
                 bpm = line[1]
