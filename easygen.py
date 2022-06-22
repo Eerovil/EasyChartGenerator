@@ -4,10 +4,10 @@ import re
 filename = sys.argv[1]
 
 class Parser():
-    def get_on_beat()
+    def get_on_beat(self)
 
 
-    def parse_expert_part(part_lines, sync_track=[]):
+    def parse_expert_part(self, part_lines):
         pass
 
 
