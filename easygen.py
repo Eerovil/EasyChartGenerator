@@ -14,6 +14,9 @@ def parse_sync_track_part(part_lines):
         if '=' not in line:
             continue
         key, value = line.split('=')
+        if not value.startswith('B '):
+            continue
+        sync_track.append((key, value))
 
 
 def parse_file(lines):
