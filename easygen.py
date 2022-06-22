@@ -12,7 +12,10 @@ class Parser():
         for line in self.sync_track:
             if latest = None:
                 latest = line[1]
-            if line[0] 
+            if line[0] < milliseconds:
+                latest = line[1]
+            if line[0] > milliseconds:
+                break
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
