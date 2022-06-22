@@ -36,7 +36,8 @@ class Parser():
             ms = int(ms)
             if self.get_on_beat(ms):
                 easy_lines.append(line)
-        pass
+        
+        print('\n'.join(easy_lines))
 
 
     def parse_sync_track_part(self, part_lines):
