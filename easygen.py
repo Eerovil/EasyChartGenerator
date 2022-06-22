@@ -8,3 +8,8 @@ def parse_expert_part():
 
 def parse_file():
     pass
+
+
+with open(filename, 'r') as f:
+    lines = f.readlines()
+    parse_file(lines)
