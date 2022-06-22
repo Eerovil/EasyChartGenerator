@@ -6,7 +6,7 @@ filename = sys.argv[1]
 class Parser():
     sync_track = []
 
-    def get_bpm(self, milliseconds)
+    def get_bpm(self, milliseconds):
         # Get bpm current
         latest = None
         for line in self.sync_track:
