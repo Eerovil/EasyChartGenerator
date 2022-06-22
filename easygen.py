@@ -22,7 +22,7 @@ class Parser():
             key = key.strip()
             value = value.replace('B ', '').strip()
             sync_track.append((key, value))
-        return sync_track
+        self.sync_track
 
 
     def parse_file(lines):
