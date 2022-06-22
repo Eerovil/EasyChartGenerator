@@ -14,6 +14,8 @@ def parse_file(lines):
     for line in lines:
         if re.match(r'^[Expert\w*]$', line):
             part = line
+            continue
+        
 
 
 with open(filename, 'r') as f:
