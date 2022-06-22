@@ -16,6 +16,8 @@ def parse_file(lines):
             part = line
             continue
         
+        if part:
+            part_lines.append(line)
 
 
 with open(filename, 'r') as f:
