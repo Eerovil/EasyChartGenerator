@@ -34,7 +34,7 @@ def parse_file(lines):
                 if '[Expert' in part:
                     parse_expert_part(part_lines)
                 if part == '[SyncTrack]':
-                    parse_sync_track_part(part_lines)
+                    sync_track = parse_sync_track_part(part_lines)
                 part = None
                 part_lines = []
 
