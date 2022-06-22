@@ -8,7 +8,8 @@ class Parser():
 
     def get_bpm(self, milliseconds)
         # Get bpm current
-        for line in self.sync_track
+        for line in self.sync_track:
+            if line
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
@@ -27,7 +28,7 @@ class Parser():
             if not value.startswith('B '):
                 continue
             key = key.strip()
-            value = value.replace('B ', '').strip()
+            value = int(value.replace('B ', '').strip())
             sync_track.append((key, value))
         self.sync_track = sync_track
 
