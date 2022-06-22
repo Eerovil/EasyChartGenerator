@@ -19,7 +19,7 @@ class Parser():
                 bpm_start = line[0]
             if line[0] > milliseconds:
                 break
-        return bpm, 
+        return bpm, bpm_start
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
