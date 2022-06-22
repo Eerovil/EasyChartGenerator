@@ -4,7 +4,10 @@ import re
 filename = sys.argv[1]
 
 class Parser():
+    sync_track = []
     def get_bpm(self, milliseconds)
+        # Get bpm current
+        for line in self.
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
