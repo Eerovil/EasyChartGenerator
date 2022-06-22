@@ -17,7 +17,8 @@ def parse_file(lines):
             continue
         if line == '}':
             if part:
-                parse_expert_part(part_lines)
+                if '[Expert' in part:
+                    parse_expert_part(part_lines)
                 part = None
                 part_lines = []
 
