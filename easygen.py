@@ -5,6 +5,7 @@ filename = sys.argv[1]
 
 class Parser():
     sync_track = []
+
     def get_bpm(self, milliseconds)
         # Get bpm current
         for line in self.
