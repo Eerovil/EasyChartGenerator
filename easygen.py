@@ -25,7 +25,7 @@ class Parser():
         self.sync_track = sync_track
 
 
-    def parse_file(lines):
+    def parse_file(self, lines):
         part = None
         part_lines = []
         sync_track = []
