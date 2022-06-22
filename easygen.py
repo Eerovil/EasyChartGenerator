@@ -4,6 +4,9 @@ import sys
 
 
 filename = sys.argv[1]
+global_beat_multiplier = 1
+if len(sys.argv) > 2:
+    global_beat_multiplier = float(sys.argv[2])
 
 class Parser():
     sync_track = []
@@ -11,38 +14,100 @@ class Parser():
     new_parts = {}
     lines = []
 
-    def get_on_beat(self, milliseconds):
-        # return true if milliseconds are on beat
-        return milliseconds % self.resolution == 0
+    def get_bpm_for_ms(self, ms):
+        ret_ms = None
+        ret_bpm = None
+        line_bpm = None
+        for line in self.sync_track:
+            if 'B ' not in line[1] and 'TS ' not in line[1]:
+                continue
+            line_ms = int(line[0])
+            if 'B ' in line[1]:
+                line_bpm = int(line[1].replace('B ', '').strip())
+            if ret_bpm is None:
+                ret_bpm = line_bpm
+                ret_ms = line_ms
+            if line_ms <= ms:
+                ret_bpm = line_bpm
+                ret_ms = line_ms
+            if line_ms > ms:
+                break
+        return ret_bpm, ret_ms
 
-    def notes_to_easy_single(self, notes):
-        # 4 -> 0
-        # 3 -> 1
-        # No chords
+    def get_on_beat(self, milliseconds, beat_multiplier=1):
+        # return true if milliseconds are on beat
+        bpm, bpm_ms = self.get_bpm_for_ms(milliseconds)
+        milliseconds -= bpm_ms
+        return milliseconds % int(self.resolution * global_beat_multiplier * beat_multiplier) == 0
+
+    def notes_to_diff_single(self, diff, ms, notes, ms_delta_around=0):
         ret = []
-        for note in notes[:1]:
-            _, color, length = note.split(' ')
-            if color == '4':
-                color = '0'
-            elif color == '3':
-                color = '1'
-            ret.append('N {} {}'.format(color, length))
+        if diff == 'easy':
+            # 4 -> 0
+            # 3 -> 1
+            # No chords
+            if (ms_delta_around < self.resolution * global_beat_multiplier * 2) and not self.get_on_beat(ms, beat_multiplier=2):
+                return ret
+            for note in notes[:1]:
+                _, color, length = note.split(' ')
+                if color == '4':
+                    color = '0'
+                elif color == '3':
+                    color = '1'
+                ret.append('N {} {}'.format(color, length))
+            return ret
+
+        if diff == 'medium':
+            # 4 -> 1
+            # Max 2 lenngth chords
+            if (ms_delta_around < self.resolution * global_beat_multiplier) and not self.get_on_beat(ms):
+                return ret
+            for note in notes[:2]:
+                _, color, length = note.split(' ')
+                if color == '4':
+                    color = '0'
+                ret.append('N {} {}'.format(color, length))
+            return ret
+
+        if diff == 'hard':
+            if (ms_delta_around < self.resolution * global_beat_multiplier * 0.5) and not self.get_on_beat(ms, beat_multiplier=0.5):
+                return []
+            return notes
+
+    def notes_to_diff_drums(self, diff, ms, notes, ms_delta_around=0):
+        ret = []
+        if diff == 'easy':
+            # No chords
+            if (ms_delta_around < self.resolution * global_beat_multiplier * 2) and not self.get_on_beat(ms, beat_multiplier=2):
+                return []
+            for note in notes:
+                _, color, length = note.split(' ')
+                return ['N {} {}'.format(color, length)]
+            return ret
+
+        if diff == 'medium':
+            # 2 max chords
+            # 0 only alone
+            ret = []
+            if (ms_delta_around < self.resolution * global_beat_multiplier) and not self.get_on_beat(ms):
+                return []
+            for note in notes[:2]:
+                _, color, length = note.split(' ')
+                if len(notes) > 1 and color == '0':
+                    continue
+                ret.append('N {} {}'.format(color, length))
+            return ret
+
+        if diff == 'hard':
+            if (ms_delta_around < self.resolution * global_beat_multiplier) and not self.get_on_beat(ms):
+                return []
+            return notes
+
         return ret
 
-    def notes_to_easy_drums(self, notes):
-        # No 0
-        # No chords
-        for note in notes:
-            _, color, length = note.split(' ')
-            if color == '0':
-                continue
-            return ['N {} {}'.format(color, length)]
-
-        return []
-
     def parse_expert_part(self, part, part_lines):
-        print("parsing expret track", part)
-        easy_lines = []
+        print("parsing expert track", part)
+        difficulty_lines = defaultdict(list)
         notes_by_ms = defaultdict(list)
         for line in part_lines:
             if '=' not in line:
@@ -51,18 +116,27 @@ class Parser():
             ms = int(ms)
             notes_by_ms[ms].append(value)
         
+        ms_list = list(notes_by_ms.keys())
+        next_ms = 0
+        prev_ms = 0
+        index = 0
         for ms, lines in notes_by_ms.items():
-            if self.get_on_beat(ms):
+            if index < len(notes_by_ms) - 1:
+                next_ms = ms_list[index + 1]
+            if index > 0:
+                prev_ms = ms_list[index - 1]
+            for diff in ['easy', 'medium', 'hard']:
                 if 'Drums' not in part:
-                    for easy_note in self.notes_to_easy_single(lines):
-                        easy_lines.append('{} = {}'.format(ms, easy_note))
+                    for easy_note in self.notes_to_diff_single(diff, ms, lines, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
+                        difficulty_lines[diff].append('{} = {}'.format(ms, easy_note))
                 else:
-                    for easy_note in self.notes_to_easy_drums(lines):
-                        easy_lines.append('{} = {}'.format(ms, easy_note))
+                    for easy_note in self.notes_to_diff_drums(diff, ms, lines, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
+                        difficulty_lines[diff].append('{} = {}'.format(ms, easy_note))
+            index += 1
         
-        easy_part = part.replace('Expert', 'Easy')
-        self.new_parts[easy_part] = ['{'] + easy_lines + ['}']
-        print('\n'.join(easy_lines))
+        for diff in ['easy', 'medium', 'hard']:
+            easy_part = part.replace('Expert', diff.capitalize())
+            self.new_parts[easy_part] = ['{'] + difficulty_lines[diff] + ['}']
 
 
     def parse_sync_track_part(self, part_lines):
@@ -71,10 +145,7 @@ class Parser():
             if '=' not in line:
                 continue
             key, value = [_line__part.strip() for _line__part in line.split('=')]
-            if not value.startswith('B '):
-                continue
             key = key.strip()
-            value = int(value.replace('B ', '').strip())
             sync_track.append((key, value))
         self.sync_track = sync_track
         print("sync track: ", sync_track)
