@@ -19,6 +19,8 @@ def parse_file(lines):
             if part:
                 if '[Expert' in part:
                     parse_expert_part(part_lines)
+                if part == '[SyncTrack]':
+                    
                 part = None
                 part_lines = []
 
