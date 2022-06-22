@@ -1,3 +1,13 @@
+#
+# Clone Hero difficulties generator script
+# 
+# Usage: python3 easygen.py mysong.chart <multiplier>
+# Will generate a new file called easy_mysong.chart in the current directory.
+#
+# If your song has very slow or fast BPM, pass a multiplier after the filename to make the charts easier/harder.
+# 
+#
+
 from collections import defaultdict
 import re
 import sys
