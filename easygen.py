@@ -20,7 +20,7 @@ class Parser():
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
-
+        bpm = self.get_bpm(milliseconds)
 
     def parse_expert_part(self, part_lines):
         pass
