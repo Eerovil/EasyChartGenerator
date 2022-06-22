@@ -4,7 +4,7 @@ import re
 filename = sys.argv[1]
 
 
-def parse_expert_part():
+def parse_expert_part(part_lines):
     pass
 
 
@@ -15,7 +15,10 @@ def parse_file(lines):
         if re.match(r'^[Expert\w*]$', line):
             part = line
             continue
-        if line == '}'
+        if line == '}':
+            if part:
+                part = None
+
         if part:
             part_lines.append(line)
 
