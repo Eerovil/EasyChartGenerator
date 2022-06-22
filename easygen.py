@@ -16,6 +16,7 @@ class Parser():
                 latest = line[1]
             if line[0] > milliseconds:
                 break
+        return latest
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
