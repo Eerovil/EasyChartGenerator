@@ -1,3 +1,5 @@
+import re
+
 
 filename = sys.argv[1]
 
