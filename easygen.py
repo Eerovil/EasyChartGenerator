@@ -4,7 +4,7 @@ import re
 filename = sys.argv[1]
 
 
-def parse_expert_part(part_lines):
+def parse_expert_part(part_lines, sync_track=[]):
     pass
 
 
