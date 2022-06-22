@@ -8,20 +8,21 @@ class Parser():
 
     def get_bpm(self, milliseconds):
         # Get bpm current
-        latest = None
+        bpm = None
         for line in self.sync_track:
-            if latest = None:
-                latest = line[1]
+            if bpm = None:
+                bpm = line[1]
             if line[0] < milliseconds:
-                latest = line[1]
+                bpm = line[1]
             if line[0] > milliseconds:
                 break
-        return latest
+        return bpm, 
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
         bpm = self.get_bpm(milliseconds)
         milliseconds_per_beat = 60000 / bpm
+
 
     def parse_expert_part(self, part_lines):
         pass
