@@ -36,9 +36,9 @@ class Parser():
             if line == '}':
                 if part:
                     if '[Expert' in part:
-                        parse_expert_part(part_lines, sync_track=sync_track)
+                        self.parse_expert_part(part_lines, sync_track=sync_track)
                     if part == '[SyncTrack]':
-                        parse_sync_track_part(part_lines)
+                        self.parse_sync_track_part(part_lines)
                     part = None
                     part_lines = []
 
