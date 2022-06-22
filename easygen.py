@@ -15,7 +15,6 @@ def parse_file(lines):
         if re.match(r'^[Expert\w*]$', line):
             part = line
             continue
-        
         if part:
             part_lines.append(line)
 
