@@ -12,13 +12,14 @@ def parse_file(lines):
     part = None
     part_lines = []
     for line in lines:
-        if re.match(r'^[Expert\w*]$', line):
+        if re.match(r'^[\w*]$', line):
             part = line
             continue
         if line == '}':
             if part:
                 parse_expert_part(part_lines)
                 part = None
+                part_lines = []
 
         if part:
             part_lines.append(line)
