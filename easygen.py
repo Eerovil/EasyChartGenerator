@@ -25,6 +25,7 @@ def parse_sync_track_part(part_lines):
 def parse_file(lines):
     part = None
     part_lines = []
+    sync_track = []
     for line in lines:
         if re.match(r'^[\w*]$', line):
             part = line
