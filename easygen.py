@@ -16,6 +16,7 @@ class Parser():
                 bpm_start = line[0]
             if line[0] < milliseconds:
                 bpm = line[1]
+                bpm_start = line[0]
             if line[0] > milliseconds:
                 break
         return bpm, 
