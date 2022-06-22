@@ -4,6 +4,8 @@ import re
 filename = sys.argv[1]
 
 class Parser():
+    def get_bpm(self, milliseconds)
+
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
 
