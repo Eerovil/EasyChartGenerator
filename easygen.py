@@ -13,6 +13,7 @@ class Parser():
         for line in self.sync_track:
             if bpm = None:
                 bpm = line[1]
+                bpm_start = line[0]
             if line[0] < milliseconds:
                 bpm = line[1]
             if line[0] > milliseconds:
