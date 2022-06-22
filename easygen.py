@@ -32,6 +32,7 @@ class Parser():
     def parse_expert_part(self, part_lines):
         for line in part_lines:
             ms, value = [_line__part.strip() for _line__part in line.split(' = ')]
+            ms = int(ms)
             if self.get_on_beat(line)
         pass
 
