@@ -23,7 +23,7 @@ class Parser():
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
-        bpm = self.get_bpm(milliseconds)
+        bpm, bpm_start = self.get_bpm(milliseconds)
         milliseconds_per_beat = 60000 / bpm
 
 
