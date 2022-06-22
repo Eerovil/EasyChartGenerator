@@ -38,7 +38,7 @@ class Parser():
                     if '[Expert' in part:
                         parse_expert_part(part_lines, sync_track=sync_track)
                     if part == '[SyncTrack]':
-                        sync_track = parse_sync_track_part(part_lines)
+                        parse_sync_track_part(part_lines)
                     part = None
                     part_lines = []
 
