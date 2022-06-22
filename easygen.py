@@ -17,7 +17,7 @@ def parse_sync_track_part(part_lines):
         if not value.startswith('B '):
             continue
         key = key.strip()
-        value = value.replace('B ', '').strip().
+        value = value.replace('B ', '').strip()
         sync_track.append((key, value))
 
 
