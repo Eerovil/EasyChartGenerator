@@ -25,6 +25,8 @@ class Parser():
         # return true if milliseconds are on beat
         bpm, bpm_start = self.get_bpm(milliseconds)
         milliseconds_per_beat = 60000 / bpm
+        milliseconds -= bpm_start
+        return milliseconds % milliseconds_per_beat == 0
 
 
     def parse_expert_part(self, part_lines):
