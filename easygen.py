@@ -4,7 +4,8 @@ import re
 filename = sys.argv[1]
 
 class Parser():
-    def get_on_beat(self)
+    def get_on_beat(self, milliseconds):
+        # return true if thi
 
 
     def parse_expert_part(self, part_lines):
