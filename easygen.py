@@ -10,7 +10,9 @@ class Parser():
         # Get bpm current
         latest = None
         for line in self.sync_track:
-            if line
+            if latest = None:
+                latest = line[1]
+            if line[0] 
 
     def get_on_beat(self, milliseconds):
         # return true if milliseconds are on beat
