@@ -10,6 +10,7 @@ def parse_expert_part():
 
 def parse_file(lines):
     part = None
+    part_lines = []
     for line in lines:
         if re.match(r'^[Expert\w*]$', line):
             part = line
