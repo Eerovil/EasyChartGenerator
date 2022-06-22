@@ -19,6 +19,7 @@ def parse_sync_track_part(part_lines):
         key = key.strip()
         value = value.replace('B ', '').strip()
         sync_track.append((key, value))
+    return sync_track
 
 
 def parse_file(lines):
