@@ -35,7 +35,7 @@ class Parser():
             ms, value = [_line__part.strip() for _line__part in line.split(' = ')]
             ms = int(ms)
             if self.get_on_beat(ms):
-
+                easy_lines.append(line)
         pass
 
 
