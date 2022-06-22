@@ -50,4 +50,4 @@ with open(filename, 'r') as f:
     lines = f.readlines()
 
 parser = Parser()
-parse_file(lines)
+parser.parse_file(lines)
