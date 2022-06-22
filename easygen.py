@@ -5,7 +5,7 @@ filename = sys.argv[1]
 
 class Parser():
     def get_on_beat(self, milliseconds):
-        # return true if thi
+        # return true if milliseconds are on beat
 
 
     def parse_expert_part(self, part_lines):
