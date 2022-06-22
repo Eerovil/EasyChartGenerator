@@ -30,6 +30,8 @@ class Parser():
 
 
     def parse_expert_part(self, part_lines):
+        for line in part_lines:
+            if self.get_on_beat(line)
         pass
 
 
