@@ -6,8 +6,10 @@ def parse_expert_part():
     pass
 
 
-def parse_file():
-    pass
+def parse_file(lines):
+    for line in lines:
+        if re.match(r'^[Expert\w*]#', line):
+            continue
 
 
 with open(filename, 'r') as f:
