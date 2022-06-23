@@ -7,6 +7,10 @@
 # If your song has very slow or fast BPM, pass a multiplier after the filename to make the charts easier/harder.
 # 
 #
+# Change Log:
+# 23-06-2022 @ 05:00 GMT:
+# * Fixed songs with star power
+# * Fixed songs with existing parts
 
 from collections import defaultdict
 import re
@@ -131,21 +135,28 @@ class Parser():
         prev_ms = 0
         index = 0
         for ms, lines in notes_by_ms.items():
-            if index < len(notes_by_ms) - 1:
-                next_ms = ms_list[index + 1]
-            if index > 0:
-                prev_ms = ms_list[index - 1]
+            notes = [_line for _line in lines if _line.startswith('N ')]
+            if len(notes) > 0:
+                if index < len(notes_by_ms) - 1:
+                    next_ms = ms_list[index + 1]
+                if index > 0:
+                    prev_ms = ms_list[index - 1]
             for diff in ['easy', 'medium', 'hard']:
+                for non_note_line in lines:
+                    if non_note_line in notes:
+                        continue
+                    difficulty_lines[diff].append('{} = {}'.format(ms, non_note_line))
                 if 'Drums' not in part:
-                    for easy_note in self.notes_to_diff_single(diff, ms, lines, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
+                    for easy_note in self.notes_to_diff_single(diff, ms, notes, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
                         difficulty_lines[diff].append('{} = {}'.format(ms, easy_note))
                 else:
-                    for easy_note in self.notes_to_diff_drums(diff, ms, lines, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
+                    for easy_note in self.notes_to_diff_drums(diff, ms, notes, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
                         difficulty_lines[diff].append('{} = {}'.format(ms, easy_note))
             index += 1
         
         for diff in ['easy', 'medium', 'hard']:
             easy_part = part.replace('Expert', diff.capitalize())
+            print("Got new part ", easy_part)
             self.new_parts[easy_part] = ['{'] + difficulty_lines[diff] + ['}']
 
 
@@ -196,16 +207,21 @@ class Parser():
     def write_file(self, new_filename):
         new_lines = []
 
+        part = None
         for line in self.lines:
-            part = None
-            if re.match(r'^\[\w*\]$', line):
+            if re.match(r'^.*\[\w*\].*$', line):
                 part = line
-                new_lines.append(line)
+                if part not in self.new_parts:
+                    new_lines.append(line)
                 continue
+
             if line == '}':
                 if part:
+                    if part not in self.new_parts:
+                        new_lines.append(line)
                     part = None
-            
+                    continue
+
             if part:
                 if part not in self.new_parts:
                     new_lines.append(line)
