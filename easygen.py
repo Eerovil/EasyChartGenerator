@@ -11,11 +11,14 @@
 # 23-06-2022 @ 05:00 GMT:
 # * Fixed songs with star power
 # * Fixed songs with existing parts
+# * Don't always replace exisiting parts (set FORCE_REPLACE_PARTS if you need this)
+#
 
 from collections import defaultdict
 import re
 import sys
 
+FORCE_REPLACE_PARTS = True
 
 filename = sys.argv[1]
 global_beat_multiplier = 1
@@ -207,29 +210,38 @@ class Parser():
     def write_file(self, new_filename):
         new_lines = []
 
-        part = None
+        replace = False
+
+        parts = defaultdict(list)
         for line in self.lines:
             if re.match(r'^.*\[\w*\].*$', line):
-                part = line
-                if part not in self.new_parts:
-                    new_lines.append(line)
+                part = line.strip()
+                parts[part].append(line)
                 continue
 
             if line == '}':
                 if part:
-                    if part not in self.new_parts:
-                        new_lines.append(line)
+                    parts[part].append(line)
                     part = None
                     continue
 
             if part:
-                if part not in self.new_parts:
-                    new_lines.append(line)
-            else:
-                new_lines.append(line)
-        
-        for part, lines in self.new_parts.items():
-            new_lines.append(part)
+                parts[part].append(line)
+
+        for partname, lines in parts.items():
+            if partname in self.new_parts.keys():
+                if FORCE_REPLACE_PARTS:
+                    print("Replacing existing part ", partname)
+                    continue
+                else:
+                    print("Part ", partname, " already exists, skipping")
+            new_lines.extend(lines)
+
+        for partname, lines in self.new_parts.items():
+            if not FORCE_REPLACE_PARTS:
+                if partname in parts.keys():
+                    continue
+            new_lines.append(partname)
             new_lines.extend(lines)
         
         with open(new_filename, 'w') as f:
