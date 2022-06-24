@@ -12,10 +12,16 @@ logging.basicConfig(
 logger = logging.getLogger("easygen")
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def parse_args(argument_parser_class=argparse.ArgumentParser):
+    parser = argument_parser_class()
     # Positional arg: filename
-    parser.add_argument('filename', help='Filename of the file to parse')
+    if argument_parser_class is argparse.ArgumentParser:
+        parser.add_argument('filename', help='Filename of the file to parse')
+    else:
+        # Assumed GooeyParser
+        parser.add_argument('--filename', help='Filename of the file to parse', widget="FileChooser")
+        parser.add_argument('--directory', help='Filename of the directory to parse', widget="DirChooser")
+
     parser.add_argument('--batch', help='Read all files in the given path', action="store_true")
     parser.add_argument('--in_place', help='Modify files in place', action="store_true")
 
@@ -296,7 +302,11 @@ class Parser():
 class FileFinder():
     def __init__(self, args):
         self.batch = args.batch
-        self.path = args.filename
+        if args.filename:
+            self.path = args.filename
+        else:
+            self.path = args.directory
+
 
     def list_files(self):
         if self.batch:
@@ -307,8 +317,13 @@ class FileFinder():
         else:
             return [self.path]
 
-def main():
-    args = parse_args()
+
+def ask(question):
+    return input(question + ' [y/n] ').lower().startswith('y')
+
+
+def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
+    args = parse_args(argument_parser_class=argument_parser_class)
     if args.verbose:
         logger.setLevel(logging.DEBUG)
     else:
@@ -319,22 +334,27 @@ def main():
     if len(file_list) == 0:
         logger.error("No files found")
         exit(1)
+    if not any(_file.endswith('.chart') for _file in file_list):
+        logger.error("No .chart files found (Use --batch if path is a directory)")
+        exit(1)
     if len(file_list) > 1:
         # Print files and ask if they are ok
         logger.info("Found {} files:".format(len(file_list)))
         for i, file in enumerate(file_list):
             logger.info("{}".format(file))
         logger.info("")
-        if not input("Are these files ok? (y/n) ").lower().startswith('y'):
+        if not ask_func("Are these files ok?"):
+            logger.error("NO")
             exit(1)
 
     if args.in_place:
-        if not input("Will replace existing files. ARE YOU SURE?? (y/n) ").lower().startswith('y'):
+        if not ask_func("Will replace existing files. ARE YOU SURE??"):
+            logger.error("NO")
             exit(1)
 
     for filename in file_list:
         if '.chart' not in filename:
-            logger.warning("Skipping file  (not a .chart)", filename)
+            logger.warning("Skipping file %s (not a .chart)", filename)
             continue
         try:
             with open(filename, 'r') as f:

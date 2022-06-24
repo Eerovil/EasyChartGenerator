@@ -7,6 +7,15 @@ Will generate a new file called easy_mysong.chart in the current directory.
 
 Get more options with --help flag
 
+GUI:
+
+Ubuntu 20:
+
+`python3 -m pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-20.04 wxPython`
+`python3 -m pip install Gooey`
+`python3 graphical_interface.py`
+
+
 Change Log:
 
 23-06-2022 @ 05:00 GMT: Screenshots: https://imgur.com/a/pBLCUqS
