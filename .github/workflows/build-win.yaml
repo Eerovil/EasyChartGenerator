@@ -1,4 +1,10 @@
-  my_job:
+
+name: Build
+
+on: push
+
+jobs:
+  buildwin:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
