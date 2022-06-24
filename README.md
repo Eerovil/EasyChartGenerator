@@ -1,7 +1,10 @@
 
 # Clone Hero difficulties generator script
 
-Usage: `python3 easygen.py mysong.chart`
+How to use:
+
+* Download script from `https://github.com/Eerovil/EasyChartGenerator/blob/main/easygen.py`
+* Usage: `python3 easygen.py mysong.chart`
 
 Will generate a new file called easy_mysong.chart in the current directory.
 
