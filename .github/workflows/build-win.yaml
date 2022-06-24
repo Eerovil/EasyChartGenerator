@@ -14,3 +14,23 @@ jobs:
           python-version: "3.8"
       - run: pip install -r pip-requirements.txt
       - run: pyinstaller build.spec
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: upload windows artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/EasyChartGenerator.exe
+          asset_name: EasyChartGenerator.exe
+          asset_content_type: application/exe
