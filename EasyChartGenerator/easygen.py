@@ -13,12 +13,13 @@ logger = logging.getLogger("easygen")
 
 
 def parse_args(argument_parser_class=argparse.ArgumentParser):
-    parser = argument_parser_class()
     # Positional arg: filename
     if argument_parser_class is argparse.ArgumentParser:
+        parser = argument_parser_class()
         parser.add_argument('filename', help='Filename of the file to parse')
     else:
         # Assumed GooeyParser
+        parser = argument_parser_class(description="Choose Either 'filename' or 'directory' (for batch parsing)")
         parser.add_argument('--filename', help='Filename of the file to parse', widget="FileChooser")
         parser.add_argument('--directory', help='Filename of the directory to parse', widget="DirChooser")
 

@@ -1,9 +1,10 @@
-from easygen import main
+from EasyChartGenerator.easygen import main
 from gooey import Gooey, GooeyParser
 
 import wx
 app=wx.App()
 def ask(question):
+    question += " (Check the log window for info!)"
     dlg = wx.MessageDialog(None, question,'EasyChartGenerator',wx.YES_NO | wx.ICON_QUESTION)
     result = dlg.ShowModal()
 
