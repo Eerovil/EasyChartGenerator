@@ -41,6 +41,7 @@ jobs:
 
   buildlinux:
     runs-on: ubuntu-20.04
+    needs: buildwin
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 
