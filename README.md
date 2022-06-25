@@ -1,6 +1,10 @@
 
 # Clone Hero difficulties generator script
 
+| Expert (Original) | Hard | Medium | Easy |
+| ----------- | ----------- | ----------- | ----------- |
+| ![Expert](https://i.imgur.com/WtG1GTv.png) | ![Hard](https://i.imgur.com/AdyUjtP.png) | ![Medium](https://i.imgur.com/9jMFUvl.png) | ![Easy](https://i.imgur.com/9qaDY8b.png) |
+
 ## How to use:
 
 ### CLI:
