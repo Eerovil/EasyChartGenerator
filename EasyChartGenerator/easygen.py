@@ -104,7 +104,7 @@ class Parser():
             extra_multiplier = 2
         if extra_multiplier != 1:
             self.log_extra_bpm_multiplier(extra_multiplier, bpm)
-        milliseconds -= bpm_ms
+        milliseconds -= (bpm_ms or 0)
         if ms_delta_around is not None:
             if ms_delta_around > (self.resolution * self.custom_note_multiplier * extra_multiplier * beat_multiplier):
                 return True
