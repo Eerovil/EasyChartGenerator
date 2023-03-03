@@ -313,7 +313,7 @@ class Parser():
                     mode = "end"
             lines_by_mode[mode].append(line)
 
-        new_lines = lines_by_mode['start'] + sorted(lines_by_mode['middle']) + lines_by_mode['end']
+        new_lines = lines_by_mode['start'] + sorted(lines_by_mode['middle'], key=lambda l: int(l.split(' ')[0])) + lines_by_mode['end']
 
         with open(new_filename, 'w') as f:
             f.write('\n'.join(new_lines))
