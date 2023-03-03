@@ -280,6 +280,7 @@ class Parser():
             if part:
                 parts[part].append(line)
 
+        added_parts = []
         for partname, lines in parts.items():
             if partname in self.new_parts.keys():
                 if self.force_replace_parts:
@@ -287,12 +288,16 @@ class Parser():
                     continue
                 else:
                     logger.info("Part %s already exists, skipping", partname)
+            added_parts.append(partname)
             new_lines.extend(lines)
 
         for partname, lines in self.new_parts.items():
             if not self.force_replace_parts:
                 if partname in parts.keys():
                     continue
+            if partname in added_parts:
+                continue
+            added_parts.append(partname)
             new_lines.append(partname)
             new_lines.extend(lines)
 
@@ -339,10 +344,6 @@ class FileFinder():
 
 
 def ask(question):
-    try:
-        input = raw_input
-    except NameError:
-        pass
     return input(question + ' [y/n] ').lower().startswith('y')
 
 
