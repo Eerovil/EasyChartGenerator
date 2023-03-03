@@ -46,12 +46,13 @@ def parse_args(argument_parser_class=argparse.ArgumentParser):
 
 
 class Parser():
-    sync_track = []
-    resolution = 192
-    new_parts = {}
-    lines = []
 
     def __init__(self, options):
+        self.sync_track = []
+        self.resolution = 192
+        self.new_parts = {}
+        self.lines = []
+
         self.force_replace_parts = bool(options.force)
         self.easy_bpm_cutoff = options.easy_bpm_cutoff
         self.hard_bpm_cutoff = options.hard_bpm_cutoff
