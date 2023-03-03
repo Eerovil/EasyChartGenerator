@@ -295,7 +295,26 @@ class Parser():
                     continue
             new_lines.append(partname)
             new_lines.extend(lines)
-        
+
+        # Sort newlines, so that lines that start with a number are sorted by number
+        lines_by_mode = {
+            'start': [],
+            'middle': [],
+            'end': [],
+        }
+        mode = "start"
+        for line in new_lines:
+            starts_with_number = re.match(r'^\d+', line.strip())
+            if starts_with_number:
+                if mode == "start":
+                    mode = "middle"
+            else:
+                if mode == "middle":
+                    mode = "end"
+            lines_by_mode[mode].append(line)
+
+        new_lines = lines_by_mode['start'] + sorted(lines_by_mode['middle']) + lines_by_mode['end']
+
         with open(new_filename, 'w') as f:
             f.write('\n'.join(new_lines))
 
@@ -320,6 +339,10 @@ class FileFinder():
 
 
 def ask(question):
+    try:
+        input = raw_input
+    except NameError:
+        pass
     return input(question + ' [y/n] ').lower().startswith('y')
 
 
