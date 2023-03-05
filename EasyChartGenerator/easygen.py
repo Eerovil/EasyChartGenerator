@@ -114,6 +114,7 @@ class Parser():
     def notes_to_diff_single(self, diff, ms, notes, ms_delta_around=0):
         ret = []
         if diff == 'easy':
+            # 7 -> 0
             # 4 -> 0
             # 3 -> 1
             # No chords
@@ -125,10 +126,13 @@ class Parser():
                     color = '0'
                 elif color == '3':
                     color = '1'
+                elif color == '7':
+                    color = '0'
                 ret.append('N {} {}'.format(color, length))
             return ret
 
         if diff == 'medium':
+            # 7 -> 0
             # 4 -> 1
             # Max 2 lenngth chords
             if not self.get_on_beat(ms, ms_delta_around=ms_delta_around):
@@ -137,10 +141,13 @@ class Parser():
                 _, color, length = note.split(' ')
                 if color == '4':
                     color = '0'
+                elif color == '7':
+                    color = '0'
                 ret.append('N {} {}'.format(color, length))
             return ret
 
         if diff == 'hard':
+            # 7 -> 0
             if not self.get_on_beat(ms, beat_multiplier=0.5, ms_delta_around=ms_delta_around):
                 return []
             return notes
