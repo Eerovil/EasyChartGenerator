@@ -188,26 +188,27 @@ class Parser():
             notes_by_ms[ms].append(value)
         
         ms_list = list(notes_by_ms.keys())
-        next_ms = 0
-        prev_ms = 0
+        prev_ms_by_diff = {}
+        
         index = 0
         for ms, lines in notes_by_ms.items():
             notes = [_line for _line in lines if _line.startswith('N ')]
             if len(notes) > 0:
-                if index < len(notes_by_ms) - 1:
-                    next_ms = ms_list[index + 1]
                 if index > 0:
                     prev_ms = ms_list[index - 1]
             for diff in self.parts_to_generate:
+                prev_ms_by_diff[diff] = prev_ms_by_diff.get(diff) or 0
                 for non_note_line in lines:
                     if non_note_line in notes:
                         continue
                     difficulty_lines[diff].append('{} = {}'.format(ms, non_note_line))
                 if 'Drums' not in part:
-                    for easy_note in self.notes_to_diff_single(diff, ms, notes, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
+                    for easy_note in self.notes_to_diff_single(diff, ms, notes, ms_delta_around=(ms - prev_ms_by_diff[diff])):
+                        prev_ms_by_diff[diff] = ms
                         difficulty_lines[diff].append('{} = {}'.format(ms, easy_note))
                 else:
-                    for easy_note in self.notes_to_diff_drums(diff, ms, notes, ms_delta_around=min(ms - prev_ms, next_ms - ms)):
+                    for easy_note in self.notes_to_diff_drums(diff, ms, notes, ms_delta_around=(ms - prev_ms_by_diff[diff])):
+                        prev_ms_by_diff[diff] = ms
                         difficulty_lines[diff].append('{} = {}'.format(ms, easy_note))
             index += 1
         
