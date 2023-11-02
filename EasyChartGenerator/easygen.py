@@ -109,6 +109,7 @@ class Parser():
         if ms_delta_around is not None:
             if ms_delta_around > (self.resolution * self.custom_note_multiplier * extra_multiplier * beat_multiplier):
                 return True
+
         return milliseconds % int(self.resolution * self.custom_note_multiplier * extra_multiplier * beat_multiplier) == 0
 
     def notes_to_diff_single(self, diff, ms, notes, ms_delta_around=0):
@@ -156,30 +157,102 @@ class Parser():
         ret = []
         if diff == 'easy':
             # No chords
-            if not self.get_on_beat(ms, beat_multiplier=2, ms_delta_around=ms_delta_around):
+            off_beat = self.get_on_beat(ms, beat_multiplier=2, ms_delta_around=ms_delta_around)
+            on_beat = self.get_on_beat(ms, beat_multiplier=4, ms_delta_around=ms_delta_around)
+            if not on_beat and not off_beat:
                 return []
-            for note in notes:
-                _, color, length = note.split(' ')
-                return ['N {} {}'.format(color, length)]
+
+            if on_beat:
+                # Allow bass or a single note
+                for note in notes:
+                    _, color, length = note.split(' ')
+                    if color == '0':
+                        ret.append('N {} {}'.format(color, length))
+                        break
+                else:
+                    # No bass, allow single note
+                    for note in notes:
+                        _, color, length = note.split(' ')
+                        ret.append('N {} {}'.format(color, length))
+                        break
+            elif off_beat:
+                for note in notes:
+                    _, color, length = note.split(' ')
+                    if color == '0':
+                        continue
+                    ret.append('N {} {}'.format(color, length))
+                    break
+
             return ret
+
+        off_beat = self.get_on_beat(ms, beat_multiplier=1, ms_delta_around=ms_delta_around)
+        on_beat = self.get_on_beat(ms, beat_multiplier=2, ms_delta_around=ms_delta_around)
+        if not on_beat and not off_beat:
+            return []
 
         if diff == 'medium':
             # 2 max chords
             # 0 only alone
             ret = []
-            if not self.get_on_beat(ms, ms_delta_around=ms_delta_around):
-                return []
-            for note in notes[:2]:
-                _, color, length = note.split(' ')
-                if len(notes) > 1 and color == '0':
-                    continue
-                ret.append('N {} {}'.format(color, length))
+
+            if on_beat:
+                # Allow bass or a single note
+                for note in notes:
+                    _, color, length = note.split(' ')
+                    if color == '0':
+                        ret.append('N {} {}'.format(color, length))
+                        break
+                else:
+                    # No bass, allow single note
+                    for note in notes:
+                        _, color, length = note.split(' ')
+                        ret.append('N {} {}'.format(color, length))
+                        break
+            elif off_beat:
+                # Allow single note or bass
+                for note in notes:
+                    _, color, length = note.split(' ')
+                    if color != '0':
+                        ret.append('N {} {}'.format(color, length))
+                        break
+                else:
+                    # No note, allow bass
+                    for note in notes:
+                        _, color, length = note.split(' ')
+                        ret.append('N {} {}'.format(color, length))
+                        break
+
             return ret
 
         if diff == 'hard':
-            if not self.get_on_beat(ms, ms_delta_around=ms_delta_around):
-                return []
-            return notes
+            # 2 max chords
+            # 0 with one note
+            ret = []
+
+            if on_beat:
+                # Allow bass and a single note
+                for note in notes:
+                    _, color, length = note.split(' ')
+                    if color == '0':
+                        ret.append('N {} {}'.format(color, length))
+                        break
+
+                # No bass, allow single note
+                for note in notes:
+                    _, color, length = note.split(' ')
+                    if color == '0':
+                        continue
+                    ret.append('N {} {}'.format(color, length))
+                    break
+
+            elif off_beat:
+                for note in notes[:2]:
+                    _, color, length = note.split(' ')
+                    if len(notes) > 1 and color == '0':
+                        continue
+                    ret.append('N {} {}'.format(color, length))
+
+            return ret
 
         return ret
 
