@@ -26,13 +26,11 @@ def parse_args(argument_parser_class=argparse.ArgumentParser):
     parser.add_argument('--batch', help='Read all files in the given path', action="store_true")
     parser.add_argument('--in_place', help='Modify files in place', action="store_true")
 
-    parser.add_argument('--easy_bpm_cutoff', help='Bpm under this will have double the notes', default=120, type=int)
-    parser.add_argument('--hard_bpm_cutoff', help='Bpm over this will have half the notes', default=200, type=int)
     parser.add_argument(
-        '--custom_note_multiplier',
-        help='Give 2 to make charts easier. Give 0.5 to make charts harder. NOTE: This is in addition to bmp_cutoffs',
+        '--bpm_multiplier',
+        help='Give 2 to fix songs charted as half bpm',
         default=1,
-        type=int
+        type=float
     )
 
     parser.add_argument('--easy', help='If this is given, only generate Easy difficulty', action="store_true")
@@ -42,8 +40,8 @@ def parse_args(argument_parser_class=argparse.ArgumentParser):
     # 12600 - 12480 = 120
     # Double kick is note 32
     parser.add_argument(
-        '--doublekick', help='Give ms value to automatically mark double kick on expert drums',
-        action="store_true"
+        '--doublekick', help='Give ms value to automatically mark double kick on expert drums (good is 150)',
+        type=int, default=0
     )
 
     parser.add_argument('--force', help='If this is given, replace existing parts', action="store_true")
@@ -56,14 +54,16 @@ class Parser():
 
     def __init__(self, options):
         self.sync_track = []
-        self.resolution = 192
+        self.resolution = None
         self.new_parts = {}
         self.lines = []
+        self.ts_for_ms = []  # Always x/4
+        self.bpm_for_ms = []
 
         self.force_replace_parts = bool(options.force)
-        self.easy_bpm_cutoff = options.easy_bpm_cutoff
-        self.hard_bpm_cutoff = options.hard_bpm_cutoff
-        self.custom_note_multiplier = options.custom_note_multiplier
+        self.bpm_multiplier = options.bpm_multiplier
+        self.doublekick = options.doublekick
+
         if options.easy or options.medium or options.hard:
             self.parts_to_generate = []
             if options.easy:
@@ -82,25 +82,46 @@ class Parser():
         logger.info("using extra note multiplier %s (bpm %s)", multiplier, bpm)
         self._log_extra_bpm_multiplier_run = True
 
+    def get_ts_for_ms(self, ms):
+        ms = int(ms)
+        prev_ret = None
+        for ts, line_ms in self.ts_for_ms:
+            if prev_ret and line_ms > ms:
+                return prev_ret
+            prev_ret = ts, line_ms
+        return prev_ret
+
     def get_bpm_for_ms(self, ms):
-        ret_ms = None
-        ret_bpm = None
-        line_bpm = None
+        ms = int(ms)
+        prev_ret = None
+        for bpm, line_ms in self.bpm_for_ms:
+            if prev_ret and line_ms > ms:
+                return prev_ret
+            prev_ret = bpm, line_ms
+        return prev_ret
+
+    def get_effective_bpm(self, ms):
+        bpm, bpm_ms = self.get_bpm_for_ms(ms)
+        if not bpm:
+            return 0
+        if self.bpm_multiplier:
+            bpm = bpm * self.bpm_multiplier
+        return bpm
+
+    def handle_sync_track(self):
         for line in self.sync_track:
-            if 'B ' not in line[1] and 'TS ' not in line[1]:
-                continue
             line_ms = int(line[0])
             if 'B ' in line[1]:
-                line_bpm = int(line[1].replace('B ', '').strip())
-            if ret_bpm is None:
-                ret_bpm = line_bpm
-                ret_ms = line_ms
-            if line_ms <= ms:
-                ret_bpm = line_bpm
-                ret_ms = line_ms
-            if line_ms > ms:
-                break
-        return (ret_bpm or 0) / 1000, ret_ms
+                line_bpm = int(line[1].replace('B ', '').strip()) / 1000.0
+                self.bpm_for_ms.append((
+                    line_bpm, line_ms
+                ))
+            if 'TS ' in line[1]:
+                line_ts = int(line[1].replace('TS ', '').strip())
+                self.ts_for_ms.append((
+                    line_ts, line_ms
+                ))
+
 
     def ms_to_real_time_diff(self, ms, prev_ms):
         # Convert ms values to real time diff
@@ -117,31 +138,35 @@ class Parser():
         minutes = beats / bpm
         return minutes * 60000
 
-    def get_on_beat(self, milliseconds, beat_multiplier=1, ms_delta_around=None):
-        # return true if milliseconds are on beat
-        bpm, bpm_ms = self.get_bpm_for_ms(milliseconds)
-        extra_multiplier = 1
-        if int(bpm) < self.easy_bpm_cutoff:
-            extra_multiplier = 0.5
-        if int(bpm) > self.hard_bpm_cutoff:
-            extra_multiplier = 2
-        if extra_multiplier != 1:
-            self.log_extra_bpm_multiplier(extra_multiplier, bpm)
-        milliseconds -= (bpm_ms or 0)
-        if ms_delta_around is not None:
-            if ms_delta_around > (self.resolution * self.custom_note_multiplier * extra_multiplier * beat_multiplier):
-                return True
-
-        return milliseconds % int(self.resolution * self.custom_note_multiplier * extra_multiplier * beat_multiplier) == 0
+    def get_beat(self, milliseconds):
+        # return number (0-3) or more on different time signatures
+        # We use modulo 2 to get on-beats and off-beats
+        ts, first_beat_ms = self.get_ts_for_ms(milliseconds)
+        if self.bpm_multiplier != 1:
+            ts = int(ts * self.bpm_multiplier)
+        delta_ms = milliseconds - first_beat_ms
+        resolution = self.resolution
+        if self.bpm_multiplier != 1:
+            resolution = int(resolution / self.bpm_multiplier)
+        beat = delta_ms / resolution
+        return beat % ts
 
     def notes_to_diff_single(self, diff, ms, notes, ms_delta_around=0):
         ret = []
+        beat_number = self.get_beat(ms)
+
+        on_beat = int(beat_number) == beat_number and beat_number % 2 == 0
+        off_beat = int(beat_number) == beat_number and beat_number % 2 == 1
         if diff == 'easy':
+            if ms_delta_around > self.resolution * 3:
+                if not off_beat:
+                    on_beat = True
+
             # 7 -> 0
             # 4 -> 0
             # 3 -> 1
             # No chords
-            if not self.get_on_beat(ms, beat_multiplier=2, ms_delta_around=ms_delta_around):
+            if not on_beat:
                 return ret
             for note in notes[:1]:
                 _, color, length = note.split(' ')
@@ -155,10 +180,14 @@ class Parser():
             return ret
 
         if diff == 'medium':
+            if ms_delta_around > self.resolution * 2:
+                if not off_beat:
+                    on_beat = True
+
             # 7 -> 0
             # 4 -> 1
             # Max 2 lenngth chords
-            if not self.get_on_beat(ms, beat_multiplier=2, ms_delta_around=ms_delta_around):
+            if not on_beat and not off_beat:
                 return ret
             for note in notes[:2]:
                 _, color, length = note.split(' ')
@@ -170,46 +199,66 @@ class Parser():
             return ret
 
         if diff == 'hard':
+            if ms_delta_around >= self.resolution:
+                if not off_beat:
+                    on_beat = True
+
+            if int(beat_number * 2) == beat_number * 2:
+                on_beat = True
+
             # 7 -> 0
-            if not self.get_on_beat(ms, beat_multiplier=0.5, ms_delta_around=ms_delta_around):
-                return []
+            if not on_beat and not off_beat:
+                return ret
             return notes
 
     def notes_to_diff_drums(self, diff, ms, notes, ms_delta_around=0):
         ret = []
-        off_beat = self.get_on_beat(ms, beat_multiplier=2, ms_delta_around=ms_delta_around)
-        on_beat = self.get_on_beat(ms, beat_multiplier=4, ms_delta_around=ms_delta_around)
+        beat_number = self.get_beat(ms)
+        on_beat = int(beat_number) == beat_number and beat_number % 2 == 0
+        off_beat = int(beat_number) == beat_number and beat_number % 2 == 1
         if diff == 'easy':
-            # No chords
-            if not on_beat and not off_beat:
-                return []
+            # if on_beat:
+            #     ret.append('N {} {}'.format('0', '0'))
+            # elif off_beat:
+            #     ret.append('N {} {}'.format('1', '0'))
+            if ms_delta_around > self.resolution * 3:
+                if not off_beat:
+                    on_beat = True
+
+            # if self.get_effective_bpm(ms) > 150:
+            #     # Skip on beats
+            #     if on_beat and beat_number != 0:
+            #         return ret
 
             if on_beat:
                 # Allow bass or a single note
                 for note in notes:
                     _, color, length = note.split(' ')
-                    if color == '0':
+                    if color == '0' and beat_number == 0:  # easy bass only on first beat
                         ret.append('N {} {}'.format(color, length))
                         break
                 else:
                     # No bass, allow single note
                     for note in notes:
                         _, color, length = note.split(' ')
+                        if color in ['3', '4']:
+                            color = '2'
                         ret.append('N {} {}'.format(color, length))
                         break
-            elif off_beat:
-                for note in notes:
-                    _, color, length = note.split(' ')
-                    if color == '0':
-                        continue
-                    ret.append('N {} {}'.format(color, length))
-                    break
 
             return ret
 
         if diff == 'medium':
+            if ms_delta_around > self.resolution * 2:
+                if not off_beat:
+                    on_beat = True
             if not on_beat and not off_beat:
                 return []
+
+            if self.get_effective_bpm(ms) > 150:
+                # Skip on beats
+                if on_beat and beat_number != 0:
+                    return ret
 
             # 2 max chords
             # 0 only alone
@@ -219,30 +268,28 @@ class Parser():
                 # Allow bass or a single note
                 for note in notes:
                     _, color, length = note.split(' ')
-                    if color == '0':
+                    if color == '0' and beat_number == 0:  # easy bass only on first beat:
                         ret.append('N {} {}'.format(color, length))
                         break
                 else:
                     # No bass, allow single note
                     for note in notes:
                         _, color, length = note.split(' ')
+                        if color in ['4']:
+                            color = '3'
+
                         ret.append('N {} {}'.format(color, length))
                         break
             elif off_beat:
-                # Allow 1-2 notes or bass
+                # Allow 1-2 notes (no bass)
                 _found_notes = 0
                 for note in notes[:2]:
                     _, color, length = note.split(' ')
                     if color != '0':
+                        if color in ['4']:
+                            color = '3'
                         ret.append('N {} {}'.format(color, length))
                         _found_notes += 1
-
-                if _found_notes == 0:
-                    # No note, allow bass
-                    for note in notes:
-                        _, color, length = note.split(' ')
-                        ret.append('N {} {}'.format(color, length))
-                        break
 
             return ret
 
@@ -250,6 +297,9 @@ class Parser():
             # 2 max chords
             # 0 with one note
             ret = []
+            if ms_delta_around > self.resolution:
+                if not off_beat:
+                    on_beat = True
 
             if on_beat:
                 # Allow bass and a single note
@@ -297,10 +347,11 @@ class Parser():
                 notes = [_line for _line in lines if _line.startswith('N ')]
                 for note in notes:
                     _, color, length = note.split(' ')
-                    if color == '0':
+                    if self.doublekick > 0 and color == '0':
                         # This is a kick
                         millis_since_last_kick = self.ms_to_real_time_diff(ms, prev_kick)
-                        if millis_since_last_kick < 400:
+                        prev_kick = ms
+                        if millis_since_last_kick < self.doublekick:
                             logger.info("%s: %s, Converting to 2x kick", ms, millis_since_last_kick)
                             old_note = f"{ms} = N 0 {length}"
                             new_note = f"{ms} = N 32 {length}"
@@ -311,6 +362,25 @@ class Parser():
                                     break
                         else:
                             prev_kick = ms
+                    elif self.doublekick < 0 and color == '32':
+                        logger.info("%s, Converting 2x kick to normal", ms)
+                        old_note = f"{ms} = N 32 {length}"
+                        new_note = f"{ms} = N 0 {length}"
+                        for index, line in enumerate(part_lines):
+                            if line.strip() == old_note:
+                                part_lines[index] = new_note
+                                og_part_modified = True
+                                break
+
+            if og_part_modified:
+                notes_by_ms = defaultdict(list)
+                for line in part_lines:
+                    if '=' not in line:
+                        continue
+                    ms, value = [_line__part.strip() for _line__part in line.split('=')]
+                    ms = int(ms)
+                    notes_by_ms[ms].append(value)
+        
 
         index = 0
         for ms, lines in notes_by_ms.items():
@@ -350,6 +420,7 @@ class Parser():
             key = key.strip()
             sync_track.append((key, value))
         self.sync_track = sync_track
+        self.handle_sync_track()
 
     def parse_song_part(self, part_lines):
         logger.debug("parsing song part")
@@ -360,11 +431,9 @@ class Parser():
             if key == 'Resolution':
                 self.resolution = int(value)
 
-
     def parse_file(self, lines):
         part = None
         part_lines = []
-
         for line in lines:
             line = line.strip()
             self.lines.append(line)
@@ -373,12 +442,25 @@ class Parser():
                 continue
             if line == '}':
                 if part:
-                    if '[Expert' in part:
-                        self.parse_expert_part(part, part_lines)
-                    if part == '[SyncTrack]':
-                        self.parse_sync_track_part(part_lines)
                     if part == '[Song]':
                         self.parse_song_part(part_lines)
+                    if part == '[SyncTrack]':
+                        self.parse_sync_track_part(part_lines)
+                    part = None
+                    part_lines = []
+
+            if part:
+                part_lines.append(line)
+
+        for line in lines:
+            line = line.strip()
+            if re.match(r'^\[\w*\]$', line):
+                part = line
+                continue
+            if line == '}':
+                if part:
+                    if '[Expert' in part:
+                        self.parse_expert_part(part, part_lines)
                     part = None
                     part_lines = []
 
@@ -514,7 +596,7 @@ def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
             continue
         try:
             with open(filename, 'r') as f:
-                lines = [line.strip() for line in f.readlines()]
+                lines = [line.strip().replace('\ufeff', '') for line in f.readlines()]
         except IsADirectoryError:
             logger.error("{} is a directory, use --batch option to parse directories".format(filename))
             exit(1)
