@@ -117,10 +117,11 @@ class Parser():
                     line_bpm, line_ms
                 ))
             if 'TS ' in line[1]:
-                line_ts = int(line[1].replace('TS ', '').strip())
+                line_ts = int(line[1].replace('TS ', '').strip().split()[0])
                 self.ts_for_ms.append((
                     line_ts, line_ms
                 ))
+        logger.debug("ts_for_ms: %s", self.ts_for_ms)
 
 
     def ms_to_real_time_diff(self, ms, prev_ms):
@@ -221,6 +222,7 @@ class Parser():
             #     ret.append('N {} {}'.format('0', '0'))
             # elif off_beat:
             #     ret.append('N {} {}'.format('1', '0'))
+            # return ret
             if ms_delta_around > self.resolution * 3:
                 if not off_beat:
                     on_beat = True
@@ -437,8 +439,11 @@ class Parser():
         for line in lines:
             line = line.strip()
             self.lines.append(line)
-            if re.match(r'^\[\w*\]$', line):
-                part = line
+            if '[Song]' in line:
+                part = '[Song]'
+                continue
+            if '[SyncTrack]' in line:
+                part = '[SyncTrack]'
                 continue
             if line == '}':
                 if part:
@@ -601,16 +606,19 @@ def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
             logger.error("{} is a directory, use --batch option to parse directories".format(filename))
             exit(1)
 
-        logger.info("Parsing file %s", filename)
-        parser = Parser(args)
-        parser.parse_file(lines)
-        if args.in_place:
-            parser.write_file(filename)
-            logger.info("Wrote file %s", filename)
-        else:
-            new_path = filename.replace('.chart', '_easy.chart')
-            parser.write_file(new_path)
-            logger.info("Wrote file %s", new_path)
+        try:
+            logger.info("Parsing file %s", filename)
+            parser = Parser(args)
+            parser.parse_file(lines)
+            if args.in_place:
+                parser.write_file(filename)
+                logger.info("Wrote file %s", filename)
+            else:
+                new_path = filename.replace('.chart', '_easy.chart')
+                parser.write_file(new_path)
+                logger.info("Wrote file %s", new_path)
+        except Exception as e:
+            logger.error("Error parsing file %s: %s", filename, e)
 
         logger.info("")
 
