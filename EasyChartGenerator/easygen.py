@@ -338,7 +338,10 @@ class Parser():
         for line in part_lines:
             if '=' not in line:
                 continue
-            ms, value = [_line__part.strip() for _line__part in line.split('=')]
+            try:
+                ms, value = [_line__part.strip() for _line__part in line.split('=')]
+            except ValueError:
+                logger.error("Error parsing line %s", line)
             ms = int(ms)
             notes_by_ms[ms].append(value)
         
@@ -429,7 +432,10 @@ class Parser():
         for line in part_lines:
             if '=' not in line:
                 continue
-            key, value = [_line__part.strip() for _line__part in line.split('=')]
+            try:
+                key, value = [_line__part.strip() for _line__part in line.split('=')]
+            except ValueError:
+                logger.error("Error parsing line %s", line)
             if key == 'Resolution':
                 self.resolution = int(value)
 
@@ -635,7 +641,7 @@ def main(argument_parser_class=argparse.ArgumentParser, args=None, ask_func=ask,
                 parser.write_file(new_path)
                 logger.info("Wrote file %s", new_path)
         except Exception as e:
-            logger.error("Error parsing file %s: %s", filename, e)
+            logger.exception("Error parsing file %s: %s", filename, e)
 
         logger.info("")
 
