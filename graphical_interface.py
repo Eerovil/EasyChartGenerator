@@ -57,7 +57,7 @@ class EasyChartGeneratorApp:
                 logger.warning("Adding argument: %s", dest)
 
                 if kwargs.get("widget") == "FileChooser":
-                    tk.Label(self.tk_root, text=f"{dest}: {kwargs.get("help")}").grid(row=self.current_row, column=0, padx=10, pady=10)
+                    tk.Label(self.tk_root, text=f"{dest}: {kwargs.get('help')}").grid(row=self.current_row, column=0, padx=10, pady=10)
                     self.current_row += 1
                     setattr(self, dest, tk.Entry(self.tk_root, width=50))
                     getattr(self, dest).grid(row=self.current_row, column=0)
@@ -65,7 +65,7 @@ class EasyChartGeneratorApp:
                     self.filebutton.grid(row=self.current_row, column=1)
                     return
                 if kwargs.get("widget") == "DirChooser":
-                    tk.Label(self.tk_root, text=f"{dest}: {kwargs.get("help")}").grid(row=self.current_row, column=0, padx=10, pady=10)
+                    tk.Label(self.tk_root, text=f"{dest}: {kwargs.get('help')}").grid(row=self.current_row, column=0, padx=10, pady=10)
                     self.current_row += 1
                     setattr(self, dest, tk.Entry(self.tk_root, width=50))
                     getattr(self, dest).grid(row=self.current_row, column=0)
@@ -74,11 +74,11 @@ class EasyChartGeneratorApp:
                     return
                 if kwargs.get("action") == "store_true":
                     setattr(self, dest, tk.BooleanVar())
-                    tk.Checkbutton(self.tk_root, text=f"{dest}: {kwargs.get("help")}", variable=getattr(self, dest)).grid(row=self.current_row, column=0, columnspan=3)
+                    tk.Checkbutton(self.tk_root, text=f"{dest}: {kwargs.get('help')}", variable=getattr(self, dest)).grid(row=self.current_row, column=0, columnspan=3)
                     return
                 if kwargs.get("type") == int or kwargs.get("type") == float:
                     self.types[dest] = kwargs.get("type")
-                    tk.Label(self.tk_root, text=f"{dest}: {kwargs.get("help")}").grid(row=self.current_row, column=0, padx=10, pady=10)
+                    tk.Label(self.tk_root, text=f"{dest}: {kwargs.get('help')}").grid(row=self.current_row, column=0, padx=10, pady=10)
                     self.current_row += 1
                     setattr(self, dest, tk.Entry(self.tk_root, width=10, text=kwargs.get("default")))
                     getattr(self, dest).grid(row=self.current_row, column=0)
