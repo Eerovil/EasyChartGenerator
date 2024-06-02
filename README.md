@@ -22,18 +22,12 @@ Get more options with --help flag
 
   Currently broken 
 
-  ~Get the latest release `.exe` from the [releases section](https://github.com/Eerovil/EasyChartGenerator/releases).~
+  Get the latest release `.exe` from the [releases section](https://github.com/Eerovil/EasyChartGenerator/releases).
 
 
 * Linux:
-
-    * Ubuntu 20 should use this to install wxPython first:
-    ```
-    python3 -m pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-20.04 wxPython
-    ```
-
   ```
-  python3 -m pip install Gooey
+  python3 -m pip install pip-requirements.txt
   python3 graphical_interface.py
   ```
 

@@ -1,5 +1,7 @@
 ## Changelog
 
+02-06-2024 @ 19:00 GMT:
+* Added Graphical interface using [TKinter](https://docs.python.org/3/library/tkinter.html)
 
 25-06-2022 @ 06:00 GMT:
 * Added Graphical interface using [Gooey](https://github.com/chriskiehl/Gooey)
