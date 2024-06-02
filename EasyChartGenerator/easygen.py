@@ -18,10 +18,10 @@ def parse_args(argument_parser_class=argparse.ArgumentParser):
         parser = argument_parser_class()
         parser.add_argument('filename', help='Filename of the file to parse')
     else:
-        # Assumed GooeyParser
-        parser = argument_parser_class(description="Choose Either 'filename' or 'directory' (for batch parsing)")
+        # Assumed TKInterParser
+        parser = argument_parser_class()
         parser.add_argument('--filename', help='Filename of the file to parse', widget="FileChooser")
-        parser.add_argument('--directory', help='Filename of the directory to parse', widget="DirChooser")
+        parser.add_argument('--directory', help='Filename of the dir to parse', widget="DirChooser")
 
     parser.add_argument('--batch', help='Read all files in the given path', action="store_true")
     parser.add_argument('--in_place', help='Modify files in place', action="store_true")
@@ -565,8 +565,10 @@ def ask(question):
     return input(question + ' [y/n] ').lower().startswith('y')
 
 
-def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
-    args = parse_args(argument_parser_class=argument_parser_class)
+def main(argument_parser_class=argparse.ArgumentParser, args=None, ask_func=ask, dont_exit=False):
+    if not args:
+        args = parse_args(argument_parser_class=argument_parser_class)
+    logger.warning("Parsed args: %s", args.__dict__)
     if args.verbose:
         logger.setLevel(logging.DEBUG)
     else:
@@ -576,9 +578,13 @@ def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
     file_list = list(filefinder.list_files())
     if len(file_list) == 0:
         logger.error("No files found")
+        if dont_exit:
+            return
         exit(1)
     if not any(_file.endswith('.chart') for _file in file_list):
         logger.error("No .chart files found (Use --batch if path is a directory)")
+        if dont_exit:
+            return
         exit(1)
     if len(file_list) > 1:
         # Print files and ask if they are ok
@@ -588,11 +594,15 @@ def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
         logger.info("")
         if not ask_func("Are these files ok?"):
             logger.error("NO")
+            if dont_exit:
+                return
             exit(1)
 
     if args.in_place:
         if not ask_func("Will replace existing files. ARE YOU SURE??"):
             logger.error("NO")
+            if dont_exit:
+                return
             exit(1)
 
     for filename in file_list:
@@ -604,6 +614,8 @@ def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
                 lines = [line.strip().replace('\ufeff', '') for line in f.readlines()]
         except IsADirectoryError:
             logger.error("{} is a directory, use --batch option to parse directories".format(filename))
+            if dont_exit:
+                return
             exit(1)
 
         try:
@@ -611,6 +623,11 @@ def main(argument_parser_class=argparse.ArgumentParser, ask_func=ask):
             parser = Parser(args)
             parser.parse_file(lines)
             if args.in_place:
+                # Try to backup original file if backup doesn't exist
+                if not os.path.exists(filename + '.bak'):
+                    with open(filename + '.bak', 'w') as f:
+                        f.write('\n'.join(lines))
+                    logger.info("Backed up file to %s", filename + '.bak')
                 parser.write_file(filename)
                 logger.info("Wrote file %s", filename)
             else:
