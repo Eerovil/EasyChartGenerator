@@ -20,8 +20,6 @@ Get more options with --help flag
 
 * Windows:
 
-  Currently broken 
-
   Get the latest release `.exe` from the [releases section](https://github.com/Eerovil/EasyChartGenerator/releases).
 
 
