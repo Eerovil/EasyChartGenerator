@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: "3.8"
       - run: pip install -r pip-requirements.txt
-      - run: pyinstaller build.spec
+      - run: pyinstaller EasyChartGenerator.spec
       - name: release
         uses: actions/create-release@v1
         id: create_release
