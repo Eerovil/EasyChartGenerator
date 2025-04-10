@@ -257,10 +257,10 @@ class Parser():
             if not on_beat and not off_beat:
                 return []
 
-            if self.get_effective_bpm(ms) > 150:
-                # Skip on beats
-                if on_beat and beat_number != 0:
-                    return ret
+            # if self.get_effective_bpm(ms) > 150:
+            #     # Skip on beats
+            #     if on_beat and beat_number != 0:
+            #         return ret
 
             # 2 max chords
             # 0 only alone
