@@ -1,5 +1,8 @@
 ## Changelog
 
+10-04-2025 @ 14:30 GMT:
+* Fixed bug where medium difficulty would have half the notes than easy in fast "effective bpm"
+
 02-06-2024 @ 19:00 GMT:
 * Added Graphical interface using [TKinter](https://docs.python.org/3/library/tkinter.html)
 
