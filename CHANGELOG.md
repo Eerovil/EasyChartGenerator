@@ -1,5 +1,8 @@
 ## Changelog
 
+12-04-2025 @ 5:00 GMT:
+* Added support for cymbal, accent and ghost notes (Drums only)
+
 10-04-2025 @ 14:30 GMT:
 * Fixed bug where medium difficulty would have half the notes than easy in fast "effective bpm"
 

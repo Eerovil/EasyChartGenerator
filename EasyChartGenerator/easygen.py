@@ -217,6 +217,37 @@ class Parser():
         beat_number = self.get_beat(ms)
         on_beat = int(beat_number) == beat_number and beat_number % 2 == 0
         off_beat = int(beat_number) == beat_number and beat_number % 2 == 1
+
+        ghost_note = False
+
+        # Detect cymbal notes (66, 67, 68)
+        cymbal_notes = set()
+        # Detect accent notes (34, 35, 36)
+        accent_notes = set()
+        for note in notes:
+            _, color, length = note.split(' ')
+            if color in ['66', '67', '68']:
+                # 66 -> 2
+                # 67 -> 3
+                # 68 -> 4
+                cymbal_notes.add(str(int(color) - 64))
+
+            if color in ['34', '35', '36']:
+                accent_notes.add(str(int(color) - 33))
+            
+            if color == '40':
+                ghost_note = True
+
+        # Remove the cymbal and accent notes from the notes list
+        notes = [
+            note for note in notes
+            if note.split(' ')[1] not in ['66', '67', '68', '34', '35', '36', '40']
+        ]
+
+        # Force add the ghost note
+        if ghost_note:
+            ret.append('N 40 0')
+
         if diff == 'easy':
             # if on_beat:
             #     ret.append('N {} {}'.format('0', '0'))
@@ -243,9 +274,15 @@ class Parser():
                     # No bass, allow single note
                     for note in notes:
                         _, color, length = note.split(' ')
+                        _cymbal = color in cymbal_notes
+                        _accent = color in accent_notes
                         if color in ['3', '4']:
                             color = '2'
                         ret.append('N {} {}'.format(color, length))
+                        if _cymbal:
+                            ret.append('N {} {}'.format(str(int(color) + 64), length))
+                        if _accent:
+                            ret.append('N {} {}'.format(str(int(color) + 33), length))
                         break
 
             return ret
@@ -264,7 +301,6 @@ class Parser():
 
             # 2 max chords
             # 0 only alone
-            ret = []
 
             if on_beat:
                 # Allow bass or a single note
@@ -277,10 +313,16 @@ class Parser():
                     # No bass, allow single note
                     for note in notes:
                         _, color, length = note.split(' ')
+                        _cymbal = color in cymbal_notes
+                        _accent = color in accent_notes
                         if color in ['4']:
                             color = '3'
 
                         ret.append('N {} {}'.format(color, length))
+                        if _cymbal:
+                            ret.append('N {} {}'.format(str(int(color) + 64), length))
+                        if _accent:
+                            ret.append('N {} {}'.format(str(int(color) + 33), length))
                         break
             elif off_beat:
                 # Allow 1-2 notes (no bass)
@@ -288,9 +330,15 @@ class Parser():
                 for note in notes[:2]:
                     _, color, length = note.split(' ')
                     if color != '0':
+                        _cymbal = color in cymbal_notes
+                        _accent = color in accent_notes
                         if color in ['4']:
                             color = '3'
                         ret.append('N {} {}'.format(color, length))
+                        if _cymbal:
+                            ret.append('N {} {}'.format(str(int(color) + 64), length))
+                        if _accent:
+                            ret.append('N {} {}'.format(str(int(color) + 33), length))
                         _found_notes += 1
 
             return ret
@@ -298,7 +346,6 @@ class Parser():
         if diff == 'hard':
             # 2 max chords
             # 0 with one note
-            ret = []
             if ms_delta_around > self.resolution:
                 if not off_beat:
                     on_beat = True
@@ -317,6 +364,12 @@ class Parser():
                     if color == '0':
                         continue
                     ret.append('N {} {}'.format(color, length))
+                    _cymbal = color in cymbal_notes
+                    _accent = color in accent_notes
+                    if _cymbal:
+                        ret.append('N {} {}'.format(str(int(color) + 64), length))
+                    if _accent:
+                        ret.append('N {} {}'.format(str(int(color) + 33), length))
                     break
 
             elif off_beat:
@@ -325,7 +378,12 @@ class Parser():
                     if len(notes) > 2 and color == '0':
                         continue
                     ret.append('N {} {}'.format(color, length))
-
+                    _cymbal = color in cymbal_notes
+                    _accent = color in accent_notes
+                    if _cymbal:
+                        ret.append('N {} {}'.format(str(int(color) + 64), length))
+                    if _accent:
+                        ret.append('N {} {}'.format(str(int(color) + 33), length))
             return ret
 
         return ret
