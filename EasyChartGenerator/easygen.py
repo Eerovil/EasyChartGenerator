@@ -402,7 +402,9 @@ class Parser():
                 logger.error("Error parsing line %s", line)
             ms = int(ms)
             notes_by_ms[ms].append(value)
-        
+
+        prev_snare_hit = None
+        snare_hits = []
         prev_ms_by_diff = {}
         if 'Drums' in part:
             prev_kick = -1000
@@ -410,6 +412,9 @@ class Parser():
                 notes = [_line for _line in lines if _line.startswith('N ')]
                 for note in notes:
                     _, color, length = note.split(' ')
+                    if color == '1':
+                        snare_hits.append(self.get_beat(ms))
+                            
                     if self.doublekick > 0 and color == '0':
                         # This is a kick
                         millis_since_last_kick = self.ms_to_real_time_diff(ms, prev_kick)
@@ -444,6 +449,23 @@ class Parser():
                     ms = int(ms)
                     notes_by_ms[ms].append(value)
         
+        if len(snare_hits) > 0:
+            # Check how many are off beat
+            # % 1 == 0 means on beat
+            # % 1 == 0.5 means off beat
+            on_beat = 0
+            for hit in snare_hits:
+                if hit % 2 == 0:
+                    on_beat += 1
+
+            logger.info("on beat snare hits: %s", on_beat)
+            logger.info("off beat snare hits: %s", len(snare_hits) - on_beat)
+
+            # If more off beat than on beat, we double the bpm_multiplier option automatically
+            if (len(snare_hits) - on_beat) > on_beat:
+                logger.info("More off beats than on beats, doubling bpm multiplier")
+                self.bpm_multiplier = self.bpm_multiplier * 2
+                self.log_extra_bpm_multiplier(self.bpm_multiplier, self.get_effective_bpm(0))
 
         index = 0
         for ms, lines in notes_by_ms.items():

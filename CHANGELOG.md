@@ -1,5 +1,8 @@
 ## Changelog
 
+03-05-2025 @ 20:00 GMT:
+* Added snare checker to automatically fix some half-tempo charted songs.
+
 12-04-2025 @ 5:00 GMT:
 * Added support for cymbal, accent and ghost notes (Drums only)
 
